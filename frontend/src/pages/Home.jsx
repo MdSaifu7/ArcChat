@@ -163,32 +163,67 @@ export default function Home() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
+  // useEffect(() => {
+  //   socket.connect();
+  //   function onConnect() {
+  //     setIsConnected(true);
+  //     console.log("A user connected");
+  //   }
+
+  //   function onDisconnect() {
+  //     setIsConnected(false);
+  //     console.log("A user disconnected!!");
+  //   }
+
+  //   fetchChats();
+  //   socket.on("connect", onConnect);
+  //   socket.on("disconnect", onDisconnect);
+
+  //   socket.on("ai-response", ({ ai }) => {
+  //     setIsTyping(false);
+
+  //     setMessages((prev) => [...prev, { role: "assistant", content: ai }]);
+  //   });
+  //   return () => {
+  //     socket.off("connect", onConnect);
+  //     socket.off("disconnect", onDisconnect);
+  //     socket.off("ai-response");
+  //     // await deleteChat(activeId);
+  //   };
+  // }, []);
+
   useEffect(() => {
-    socket.connect();
-    function onConnect() {
+    if (!socket.connected) {
+      socket.connect(); // connect only if not connected
+    }
+
+    const onConnect = () => {
       setIsConnected(true);
       console.log("A user connected");
-    }
+    };
 
-    function onDisconnect() {
+    const onDisconnect = () => {
       setIsConnected(false);
       console.log("A user disconnected!!");
-    }
+    };
+
+    const onAIResponse = ({ ai }) => {
+      setIsTyping(false);
+      setMessages((prev) => [...prev, { role: "assistant", content: ai }]);
+    };
 
     fetchChats();
+
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
+    socket.on("ai-response", onAIResponse);
 
-    socket.on("ai-response", ({ ai }) => {
-      setIsTyping(false);
-
-      setMessages((prev) => [...prev, { role: "assistant", content: ai }]);
-    });
     return () => {
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
-      socket.off("ai-response");
-      // await deleteChat(activeId);
+      socket.off("ai-response", onAIResponse);
+
+      socket.disconnect();
     };
   }, []);
   const autoResize = () => {
