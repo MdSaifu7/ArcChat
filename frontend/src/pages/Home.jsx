@@ -150,6 +150,7 @@ export default function Home() {
   const [activeId, setActiveId] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
   const [hoveredId, setHoveredId] = useState(null);
+  const [isSending, setIsSending] = useState(false);
   const [title, setTitle] = useState("");
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
@@ -238,36 +239,75 @@ export default function Home() {
     autoResize();
   };
 
+  // const sendMessage = async () => {
+  //   if (!input.trim()) return;
+  //   let chatId = activeId;
+  //   if (!chatId) {
+  //     // const userTitle = prompt("Enter chat title");
+  //     // if (!userTitle) return;
+  //     const generatedTitle = await createTitle(input);
+  //     console.log(generatedTitle);
+
+  //     setTitle(generatedTitle);
+  //     const dbChat = await createChat(generatedTitle);
+  //     setConversations((prev) => [
+  //       { id: dbChat._id, title: generatedTitle },
+  //       ...prev,
+  //     ]);
+  //     setActiveId(dbChat._id);
+  //     chatId = dbChat._id;
+  //   }
+
+  //   setMessages((prev) => [...prev, { role: "user", content: input }]);
+
+  //   socket.emit("user-message", {
+  //     content: input,
+  //     chat: chatId,
+  //   });
+  //   setInput("");
+  //   if (textareaRef.current) textareaRef.current.style.height = "auto";
+  //   setIsTyping(true);
+  // };
+
   const sendMessage = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() || isSending) return;
+
+    setIsSending(true);
+
     let chatId = activeId;
-    if (!chatId) {
-      // const userTitle = prompt("Enter chat title");
-      // if (!userTitle) return;
-      const generatedTitle = await createTitle(input);
-      console.log(generatedTitle);
 
-      setTitle(generatedTitle);
-      const dbChat = await createChat(generatedTitle);
-      setConversations((prev) => [
-        { id: dbChat._id, title: generatedTitle },
-        ...prev,
-      ]);
-      setActiveId(dbChat._id);
-      chatId = dbChat._id;
+    try {
+      if (!chatId) {
+        const generatedTitle = await createTitle(input);
+
+        setTitle(generatedTitle);
+
+        const dbChat = await createChat(generatedTitle);
+
+        setConversations((prev) => [
+          { id: dbChat._id, title: generatedTitle },
+          ...prev,
+        ]);
+
+        setActiveId(dbChat._id);
+        chatId = dbChat._id;
+      }
+
+      setMessages((prev) => [...prev, { role: "user", content: input }]);
+
+      socket.emit("user-message", {
+        content: input,
+        chat: chatId,
+      });
+
+      setInput("");
+      if (textareaRef.current) textareaRef.current.style.height = "auto";
+
+      setIsTyping(true);
+    } finally {
+      setIsSending(false);
     }
-
-    setMessages((prev) => [...prev, { role: "user", content: input }]);
-
-    socket.emit("user-message", {
-      content: input,
-      chat: chatId,
-    });
-    setInput("");
-    if (textareaRef.current) textareaRef.current.style.height = "auto";
-    setIsTyping(true);
   };
-
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
