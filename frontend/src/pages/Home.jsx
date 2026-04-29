@@ -271,7 +271,7 @@ export default function Home() {
 
   const sendMessage = async () => {
     if (!input.trim() || isSending) return;
-
+    if (isSending) return;
     setIsSending(true);
 
     let chatId = activeId;
@@ -309,6 +309,7 @@ export default function Home() {
     }
   };
   const handleKeyDown = (e) => {
+    if (isSending) return;
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
