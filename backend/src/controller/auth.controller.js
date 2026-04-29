@@ -74,7 +74,12 @@ async function loginUser(req, res) {
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
-    res.cookie("token", token);
+    // res.cookie("token", token);
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true, // REQUIRED for HTTPS (Vercel + Render)
+      sameSite: "none", // REQUIRED for cross-origin
+    });
 
     return res.status(201).json({
       message: "User login successfully",
