@@ -9,11 +9,22 @@ const app = express();
 
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://arc-chat-ks6fw8hef-mdsaifu7s-projects.vercel.app",
-      "https://arc-chat-rust.vercel.app",
-    ],
+    origin: (origin, callback) => {
+      const allowed = [
+        "http://localhost:5173",
+        /^https:\/\/.*\.vercel\.app$/, // ✅ allows ALL vercel preview URLs
+      ];
+      if (
+        !origin ||
+        allowed.some((o) =>
+          typeof o === "string" ? o === origin : o.test(origin)
+        )
+      ) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
